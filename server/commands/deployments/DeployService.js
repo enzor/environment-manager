@@ -38,7 +38,7 @@ module.exports = function DeployServiceCommandHandler(command) {
     let accountName = deployment.accountName;
 
     // Run asynchronously, we don't wait for deploy to finish intentionally
-    deploy(deployment, destination, sourcePackage, deployment);
+    deploy(deployment, destination, sourcePackage);
 
     yield deploymentLogger.started(deployment, accountName);
     return deployment;
@@ -111,7 +111,7 @@ function validateCommandAndCreateDeployment(command) {
   });
 }
 
-function deploy(deployment, destination, sourcePackage, deployment) {
+function deploy(deployment, destination, sourcePackage) {
   return co(function* () {
     const accountName = deployment.accountName;
     const requiredInfra = yield getInfrastructureRequirements({ accountName, deployment });
