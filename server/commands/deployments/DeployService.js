@@ -5,7 +5,10 @@
 let co = require('co');
 let Enums = require('Enums');
 let DeploymentContract = require('modules/deployment/DeploymentContract');
-let sender = require('modules/sender');
+let provideInfrastructure = require('commands/deployments/ProvideInfrastructure.js');
+let preparePackage = require('commands/deployments/PreparePackage');
+let pushDeployment = require('commands/deployments/PushDeployment');
+let getInfrastructureRequirements = require('commands/deployments/GetInfrastructureRequirements');
 let infrastructureConfigurationProvider = require('modules/provisioning/infrastructureConfigurationProvider');
 let logger = require('modules/logger');
 let namingConventionProvider = require('modules/provisioning/namingConventionProvider');
@@ -32,10 +35,11 @@ module.exports = function DeployServiceCommandHandler(command) {
       };
     }
 
-    // Run asynchronously, we don't wait for deploy to finish intentionally
-    deploy(deployment, destination, sourcePackage, command);
-
     let accountName = deployment.accountName;
+
+    // Run asynchronously, we don't wait for deploy to finish intentionally
+    deploy(deployment, destination, sourcePackage, deployment);
+
     yield deploymentLogger.started(deployment, accountName);
     return deployment;
   });
@@ -107,13 +111,18 @@ function validateCommandAndCreateDeployment(command) {
   });
 }
 
-function deploy(deployment, destination, sourcePackage, command) {
+function deploy(deployment, destination, sourcePackage, deployment) {
   return co(function* () {
     const accountName = deployment.accountName;
-    const requiredInfra = yield getInfrastructureRequirements(accountName, deployment, command);
-    yield provideInfrastructure(accountName, requiredInfra, command);
-    yield preparePackage(accountName, destination, sourcePackage, command);
-    yield pushDeployment(accountName, requiredInfra, deployment, destination, command);
+    const requiredInfra = yield getInfrastructureRequirements({ accountName, deployment });
+    yield provideInfrastructure({
+      accountName,
+      deployment,
+      asgsToCreate: requiredInfra.asgsToCreate,
+      launchConfigsToCreate: requiredInfra.launchConfigsToCreate
+    });
+    yield preparePackage({ accountName, destination, sourcePackage, deployment });
+    yield pushDeployment({ accountName, deployment, s3Path: destination, expectedNodeDeployments: requiredInfra.expectedInstances });
 
     deploymentLogger.inProgress(
       deployment.id,
@@ -141,50 +150,6 @@ function sanitiseError(error) {
     return JSON.stringify(error);
   }
   return _.toString(error);
-}
-
-function getInfrastructureRequirements(accountName, deployment, parentCommand) {
-  let command = {
-    name: 'GetInfrastructureRequirements',
-    accountName,
-    deployment
-  };
-
-  return sender.sendCommand({ command, parent: parentCommand });
-}
-
-function provideInfrastructure(accountName, requiredInfra, parentCommand) {
-  let command = {
-    name: 'ProvideInfrastructure',
-    accountName,
-    asgsToCreate: requiredInfra.asgsToCreate,
-    launchConfigsToCreate: requiredInfra.launchConfigsToCreate
-  };
-
-  return sender.sendCommand({ command, parent: parentCommand });
-}
-
-function preparePackage(accountName, destination, source, parentCommand) {
-  let command = {
-    name: 'PreparePackage',
-    accountName,
-    destination,
-    source
-  };
-
-  return sender.sendCommand({ command, parent: parentCommand });
-}
-
-function pushDeployment(accountName, requiredInfra, deployment, s3Path, parentCommand) {
-  let command = {
-    name: 'PushDeployment',
-    accountName,
-    deployment,
-    s3Path,
-    expectedNodeDeployments: requiredInfra.expectedInstances
-  };
-
-  return sender.sendCommand({ command, parent: parentCommand });
 }
 
 function getSourcePackageByCommand(command) {

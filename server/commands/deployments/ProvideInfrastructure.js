@@ -4,11 +4,12 @@
 
 let co = require('co');
 let DeploymentCommandHandlerLogger = require('commands/deployments/DeploymentCommandHandlerLogger');
-let sender = require('modules/sender');
+let createLaunchConfiguration = require('commands/deployments/CreateLaunchConfiguration');
+let createAutoScalingGroup = require('commands/deployments/CreateAutoScalingGroup');
 let _ = require('lodash');
 
 module.exports = function ProvideInfrastructure(command) {
-  let logger = new DeploymentCommandHandlerLogger(command);
+  let logger = new DeploymentCommandHandlerLogger(command.deployment);
 
   return co(function* () {
     let accountName = command.accountName;
@@ -19,7 +20,7 @@ module.exports = function ProvideInfrastructure(command) {
     logger.info(`${launchConfigsToCreate.length} launch configs to create`);
 
     yield launchConfigsToCreate.map(
-      template => provideLaunchConfiguration(template, accountName, command)
+      template => provideLaunchConfiguration(template, accountName, command.deployment)
     );
 
     _.each(launchConfigsToCreate, (template) => {
@@ -29,7 +30,7 @@ module.exports = function ProvideInfrastructure(command) {
 
     logger.info(`${asgsToCreate.length} ASGs to create`);
     yield asgsToCreate.map(
-      template => provideAutoScalingGroup(template, accountName, command)
+      template => provideAutoScalingGroup(template, accountName, command.deployment)
     );
   }).catch((error) => {
     logger.error('An error has occurred providing the expected infrastructure', error);
@@ -37,28 +38,28 @@ module.exports = function ProvideInfrastructure(command) {
   });
 };
 
-function provideLaunchConfiguration(launchConfigurationTemplate, accountName, parentCommand) {
+function provideLaunchConfiguration(launchConfigurationTemplate, accountName, deployment) {
   let command = {
-    name: 'CreateLaunchConfiguration',
     accountName,
-    template: launchConfigurationTemplate
+    template: launchConfigurationTemplate,
+    deployment
   };
 
-  return sender.sendCommand({ command, parent: parentCommand }).catch(error => (
+  return createLaunchConfiguration(command).catch(error => (
       error.name === 'LaunchConfigurationAlreadyExistsError' ?
         Promise.resolve() :
         Promise.reject(error)
   ));
 }
 
-function provideAutoScalingGroup(autoScalingTemplate, accountName, parentCommand) {
+function provideAutoScalingGroup(autoScalingTemplate, accountName, deployment) {
   let command = {
-    name: 'CreateAutoScalingGroup',
     accountName,
-    template: autoScalingTemplate
+    template: autoScalingTemplate,
+    deployment
   };
 
-  return sender.sendCommand({ command, parent: parentCommand }).catch(error => (
+  return createAutoScalingGroup(command).catch(error => (
       error.name === 'AutoScalingGroupAlreadyExistsError' ?
         Promise.resolve() :
         Promise.reject(error)

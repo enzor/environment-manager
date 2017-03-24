@@ -7,7 +7,7 @@ let resourceProvider = require('modules/resourceProvider');
 let _ = require('lodash');
 
 module.exports = function CreateLaunchConfigurationCommandHandler(command) {
-  let logger = new DeploymentCommandHandlerLogger(command);
+  let logger = new DeploymentCommandHandlerLogger(command.deployment);
 
   assert(command, 'Expected "command" argument not to be null.');
   assert(command.template, 'Expected "command" argument to contain "template" property not null.');

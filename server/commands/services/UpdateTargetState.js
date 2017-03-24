@@ -8,7 +8,7 @@ let DeploymentCommandHandlerLogger = require('commands/deployments/DeploymentCom
 let schema = require('modules/schema/schema');
 
 module.exports = function UpdateTargetState(command) {
-  let logger = new DeploymentCommandHandlerLogger(command);
+  let logger = new DeploymentCommandHandlerLogger(command.deployment);
 
   return co(function* () {
     yield schema('UpdateTargetStateCommand').then(x => x.conform(command));

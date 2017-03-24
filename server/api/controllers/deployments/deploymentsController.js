@@ -5,7 +5,8 @@
 let deploymentsHelper = require('modules/queryHandlersUtil/deployments-helper');
 let GetNodeDeploymentLog = require('queryHandlers/deployments/GetNodeDeploymentLog');
 let co = require('co');
-let sender = require('modules/sender');
+let deployService = require('commands/deployments/DeployService');
+let toggleTargetStatus = require('commands/services/ToggleTargetStatus');
 let Enums = require('Enums');
 let activeDeploymentsStatusProvider = require('modules/monitoring/activeDeploymentsStatusProvider');
 let deploymentLogger = require('modules/DeploymentLogger');
@@ -74,7 +75,6 @@ function postDeployment(req, res, next) {
   const isDryRun = req.swagger.params.dry_run.value;
 
   let command = {
-    name: 'DeployService',
     environmentName,
     serviceName,
     serviceVersion,
@@ -85,7 +85,7 @@ function postDeployment(req, res, next) {
     isDryRun
   };
 
-  sender.sendCommand({ command, user: req.user }).then((deployment) => {
+  deployService(command).then((deployment) => {
     if (deployment.isDryRun) {
       res.status(200);
       res.json(deployment);
@@ -127,7 +127,7 @@ function patchDeployment(req, res, next) {
       let deploymentStatuses = yield activeDeploymentsStatusProvider.getActiveDeploymentsFullStatus([deployment]);
       let deploymentStatus = deploymentStatuses[0];
       yield deploymentLogger.updateStatus(deploymentStatus, newStatus);
-      return switchDeployment(key, false, req.user);
+      return switchDeployment(key, false);
     } else if (action !== undefined) {
       let enable;
       if (action === Enums.ServiceAction.IGNORE) {
@@ -137,14 +137,14 @@ function patchDeployment(req, res, next) {
       } else {
         throw new Error(`Invalid Action: "${action}", only "Install" and "Ignore" are allowed.`);
       }
-      return switchDeployment(key, enable, req.user);
+      return switchDeployment(key, enable);
     } else {
       return null;
     }
   }).then(data => res.json(data)).catch(next);
 }
 
-function switchDeployment(key, enable, user) {
+function switchDeployment(key, enable) {
   return deploymentsHelper.get({ key }).then((deployment) => {
     // Old deployments don't have 'ServerRoleName' and 'RuntimeServerRoleName' fields.
     // Unfortunately we are unable to determine these from existing data.
@@ -157,9 +157,9 @@ function switchDeployment(key, enable, user) {
     let slice = deployment.Value.ServiceSlice;
     let service = deployment.Value.ServiceName;
 
-    let command = { name: 'ToggleTargetStatus', service, environment, slice, serverRole, enable };
+    let command = { service, environment, slice, serverRole, enable };
 
-    return sender.sendCommand({ user, command });
+    return toggleTargetStatus(command);
   });
 }
 

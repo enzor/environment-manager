@@ -4,7 +4,7 @@
 
 let co = require('co');
 let DeploymentCommandHandlerLogger = require('commands/deployments/DeploymentCommandHandlerLogger');
-let sender = require('modules/sender');
+let UpdateTargetState = require('commands/services/UpdateTargetState');
 let consulClient = require('modules/consul-client');
 let serverRoleProvider = require('modules/deployment/serverRoleDefinition');
 let serviceInstallationProvider = require('modules/deployment/serviceInstallationDefinition');
@@ -13,7 +13,7 @@ let serviceDeploymentProvider = require('modules/deployment/serviceDeploymentDef
 let deploymentDefinitionProvider = require('modules/deployment/deploymentDefinition');
 
 module.exports = function PushDeploymentCommandHandler(command) {
-  const logger = new DeploymentCommandHandlerLogger(command);
+  const logger = new DeploymentCommandHandlerLogger(command.deployment);
   const deployment = command.deployment;
   const s3Path = command.s3Path;
   const expectedNodeDeployments = command.expectedNodeDeployments;
@@ -30,12 +30,14 @@ module.exports = function PushDeploymentCommandHandler(command) {
     let deploymentDefinition = yield deploymentDefinitionProvider.getKeyValue(deployment);
     let serviceDeploymentDefinition = yield serviceDeploymentProvider.getKeyValue(deployment, expectedNodeDeployments);
 
+    let env = command.deploymment.environmentName;
+
     yield [
-      updateTargetState(command, serviceDefinition),
-      updateTargetState(command, serverRoleDefinition),
-      updateTargetState(command, serviceInstallation),
-      updateTargetState(command, deploymentDefinition),
-      updateTargetState(command, serviceDeploymentDefinition)
+      updateTargetState(env, deployment, serviceDefinition),
+      updateTargetState(env, deployment, serverRoleDefinition),
+      updateTargetState(env, deployment, serviceInstallation),
+      updateTargetState(env, deployment, deploymentDefinition),
+      updateTargetState(env, deployment, serviceDeploymentDefinition)
     ];
 
     logger.info('Consul metadata has been updated');
@@ -45,15 +47,12 @@ module.exports = function PushDeploymentCommandHandler(command) {
   });
 };
 
-function updateTargetState(command, keyValue, options) {
-  return sender.sendCommand({
-    command: {
-      name: 'UpdateTargetState',
-      environment: command.deployment.environmentName,
-      key: keyValue.key,
-      value: keyValue.value,
-      options
-    },
-    parent: command
+function updateTargetState(environment, deployment, keyValue, options) {
+  return UpdateTargetState({
+    environment,
+    key: keyValue.key,
+    value: keyValue.value,
+    options,
+    deployment
   });
 }

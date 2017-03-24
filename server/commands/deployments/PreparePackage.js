@@ -15,7 +15,7 @@ const options = {
 let validate = ajv(options).compile(require('./PreparePackageCommand.schema'));
 
 module.exports = function PreparePackageCommandHandler(command) {
-  let logger = new DeploymentCommandHandlerLogger(command);
+  let logger = new DeploymentCommandHandlerLogger(command.deployment);
   let mover = packageMover(logger);
   return preparePackage(mover, command).catch((error) => {
     let msg = 'An error has occurred preparing the package';

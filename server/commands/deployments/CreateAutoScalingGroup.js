@@ -9,7 +9,7 @@ let DeploymentCommandHandlerLogger = require('commands/deployments/DeploymentCom
 let autoScalingGroupClientFactory = require('modules/clientFactories/autoScalingGroupClientFactory');
 
 module.exports = function CreateAutoScalingGroupCommandHandler(command) {
-  let logger = new DeploymentCommandHandlerLogger(command);
+  let logger = new DeploymentCommandHandlerLogger(command.deployment);
 
   assert(command, 'Expected "command" argument not to be null.');
   assert(command.template, 'Expected "command" argument to contain "template" property not null.');
