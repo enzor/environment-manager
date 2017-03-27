@@ -63,6 +63,10 @@ describe('CreateLaunchConfigurationCommandHandler:', () => {
       name: 'CreateLaunchConfiguration',
       accountName: ACCOUNT_NAME,
       template: launchConfigurationTemplate,
+      deployment: {
+        accountName: ACCOUNT_NAME,
+        id: 'id'
+      }
     };
 
     // Act

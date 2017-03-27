@@ -21,6 +21,10 @@ describe('DeployService', function () {
   let packagePathProvider;
   let sender;
   let deploymentLogger;
+  let provideInfrastructure;
+  let pushDeployment;
+  let preparePackage;
+  let getInfrastructureRequirements;
 
   const S3_PACKAGE = 's3://acme-bucket/em/binaries/package-3.1.0.tar';
   const ACCOUNT_NAME = 'acmeAccount';
@@ -84,6 +88,10 @@ describe('DeployService', function () {
     packagePathProvider = {
       getS3Path: sinon.stub().returns(Promise.resolve(''))
     };
+    provideInfrastructure = sinon.stub().returns(Promise.resolve({}));
+    preparePackage = sinon.stub().returns(Promise.resolve());
+    pushDeployment = sinon.stub().returns(Promise.resolve());
+    getInfrastructureRequirements = sinon.stub().returns(Promise.resolve({}));
     sender = {
       sendCommand: sinon.stub().returns(Promise.resolve({}))
     };
@@ -101,8 +109,11 @@ describe('DeployService', function () {
       namingConventionProvider,
       DeploymentContract,
       packagePathProvider,
-      sender,
-      deploymentLogger
+      deploymentLogger,
+      provideInfrastructure,
+      preparePackage,
+      pushDeployment,
+      getInfrastructureRequirements
     });
   });
 
@@ -162,7 +173,6 @@ describe('DeployService', function () {
 
   describe('deployments', function () {
     let command;
-    let expectedPayload;
 
     /**
      * Note: Because the deployment is asynchronous (ie, we don't wait for
@@ -171,40 +181,37 @@ describe('DeployService', function () {
      */
     beforeEach(() => {
       command = createCommand();
-      expectedPayload = Object.assign({
-        packagePath: S3_PACKAGE,
-        accountName: ACCOUNT_NAME
-      }, command);
     });
-
-    function createdExpectedCommandSpy(cmdName, done) {
-      return function (arg) {
-        if (arg.command.name === cmdName) {
-          try {
-            assert.deepEqual(arg.parent, expectedPayload);
-            done();
-          } catch (error) {
-            done(error);
-          }
-        }
-        return expectedPayload;
-      };
-    }
 
     it('should provide infrastructure', (done) => {
-      sender.sendCommand = createdExpectedCommandSpy('ProvideInfrastructure', done);
+      sut.__set__({ // eslint-disable-line no-underscore-dangle
+        provideInfrastructure: () => {
+          done();
+          return Promise.resolve();
+        }
+      });
       sut(command);
-    });
+    }).timeout(10000);
 
     it('should prepare packages', (done) => {
-      sender.sendCommand = createdExpectedCommandSpy('PreparePackage', done);
+      sut.__set__({ // eslint-disable-line no-underscore-dangle
+        preparePackage: () => {
+          done();
+          return Promise.resolve();
+        }
+      });
       sut(command);
-    });
+    }).timeout(10000);
 
     it('should push to consul', (done) => {
-      sender.sendCommand = createdExpectedCommandSpy('PushDeployment', done);
+      sut.__set__({ // eslint-disable-line no-underscore-dangle
+        pushDeployment: () => {
+          done();
+          return Promise.resolve();
+        }
+      });
       sut(command);
-    });
+    }).timeout(10000);
 
     it('should start the deployment logger', (done) => {
       sut(command).then(() => {
