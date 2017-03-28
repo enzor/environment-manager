@@ -24,7 +24,7 @@ let extractCommands = (predicate, args) => args.reduce((acc, [{ command }]) => {
 let isDynamoUpdate = command =>
   command.name === 'UpdateDynamoResource' && command.resource === 'deployments/history';
 
-describe.only('DeploymentLogger', function () {
+describe('DeploymentLogger', function () {
   let clock;
   before(function () {
     clock = sinon.useFakeTimers();
