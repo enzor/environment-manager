@@ -111,7 +111,7 @@ function validateCommandAndCreateDeployment(command) {
   });
 }
 
-function deploy(deployment, destination, sourcePackage) {
+function deploy(deployment, destination, source) {
   return co(function* () {
     const accountName = deployment.accountName;
     const requiredInfra = yield getInfrastructureRequirements({ accountName, deployment });
@@ -121,7 +121,7 @@ function deploy(deployment, destination, sourcePackage) {
       asgsToCreate: requiredInfra.asgsToCreate,
       launchConfigsToCreate: requiredInfra.launchConfigsToCreate
     });
-    yield preparePackage({ accountName, destination, sourcePackage, deployment });
+    yield preparePackage({ accountName, destination, source, deployment });
     yield pushDeployment({ accountName, deployment, s3Path: destination, expectedNodeDeployments: requiredInfra.expectedInstances });
 
     deploymentLogger.inProgress(

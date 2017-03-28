@@ -10,6 +10,7 @@ let toggleTargetStatus = require('commands/services/ToggleTargetStatus');
 let Enums = require('Enums');
 let activeDeploymentsStatusProvider = require('modules/monitoring/activeDeploymentsStatusProvider');
 let deploymentLogger = require('modules/DeploymentLogger');
+let guid = require('node-uuid');
 
 /**
  * GET /deployments
@@ -75,6 +76,9 @@ function postDeployment(req, res, next) {
   const isDryRun = req.swagger.params.dry_run.value;
 
   let command = {
+    commandId: guid.v1(),
+    username: req.user.getName(),
+    timestamp: new Date().toISOString(),
     environmentName,
     serviceName,
     serviceVersion,
