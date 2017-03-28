@@ -24,7 +24,7 @@ let extractCommands = (predicate, args) => args.reduce((acc, [{ command }]) => {
 let isDynamoUpdate = command =>
   command.name === 'UpdateDynamoResource' && command.resource === 'deployments/history';
 
-describe('DeploymentLogger', function () {
+describe.only('DeploymentLogger', function () {
   let clock;
   before(function () {
     clock = sinon.useFakeTimers();
@@ -37,7 +37,8 @@ describe('DeploymentLogger', function () {
     let deploymentStatus = {
       accountName: 'my-account',
       deploymentId: 'my-deployment',
-      nodesDeployment: []
+      nodesDeployment: [],
+      deployment: { id: 'my-deployment', accountName: 'my-account' }
     };
 
     let sender;
@@ -54,7 +55,8 @@ describe('DeploymentLogger', function () {
           this.log = function () { return Promise.resolve(); };
         },
         'modules/sender': sender,
-        'modules/logger': fakeLogger
+        'modules/logger': fakeLogger,
+        'commands/services/UpdateTargetState': sinon.spy(() => Promise.resolve())
       });
     });
 
