@@ -2,12 +2,8 @@
 
 'use strict';
 
-let scanAcrossAccounts = require('modules/queryHandlersUtil/scanAcrossAccounts');
-let ScanDynamoResources = require('queryHandlers/ScanDynamoResources');
+let scanCrossAccount = require('modules/queryHandlersUtil/scanCrossAccount');
 
 module.exports = function ScanCrossAccountDynamoResources(query) {
-  return scanAcrossAccounts((accountName) => {
-    let accountSpecificQuery = Object.assign({}, query, { accountName });
-    return ScanDynamoResources(accountSpecificQuery);
-  });
+  return scanCrossAccount(query, 'ScanDynamoResources');
 };
