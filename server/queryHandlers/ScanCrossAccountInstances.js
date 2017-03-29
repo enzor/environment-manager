@@ -2,8 +2,12 @@
 
 'use strict';
 
-let scanCrossAccount = require('modules/queryHandlersUtil/scanCrossAccount');
+let scanAcrossAccounts = require('modules/queryHandlersUtil/scanAcrossAccounts');
+let ScanInstances = require('queryHandlers/ScanInstances');
 
 module.exports = function ScanCrossAccountInstances(query) {
-  return scanCrossAccount(query, 'ScanInstances');
+  return scanAcrossAccounts((accountName) => {
+    let accountSpecificQuery = Object.assign({}, query, { accountName });
+    return ScanInstances(accountSpecificQuery);
+  });
 };
