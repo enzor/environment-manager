@@ -30,7 +30,7 @@ module.exports = function PushDeploymentCommandHandler(command) {
     let deploymentDefinition = yield deploymentDefinitionProvider.getKeyValue(deployment);
     let serviceDeploymentDefinition = yield serviceDeploymentProvider.getKeyValue(deployment, expectedNodeDeployments);
 
-    let env = command.deploymment.environmentName;
+    let env = command.deployment.environmentName;
 
     yield [
       updateTargetState(env, deployment, serviceDefinition),
