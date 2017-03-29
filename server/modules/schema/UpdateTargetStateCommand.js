@@ -20,7 +20,7 @@ module.exports = {
           pattern: '^UpdateTargetState$'
         }
       },
-      required: ['key', 'name', 'value']
+      required: ['key', 'value']
     }
   }
 };
