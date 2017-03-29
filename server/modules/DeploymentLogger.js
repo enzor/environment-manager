@@ -8,7 +8,6 @@ let DeploymentLogsStreamer = require('modules/DeploymentLogsStreamer');
 let deploymentLogsStreamer = new DeploymentLogsStreamer();
 let Enums = require('Enums');
 let logger = require('modules/logger');
-let UpdateTargetState = require('commands/services/UpdateTargetState');
 
 module.exports = {
   started(deployment, accountName) {
@@ -90,11 +89,11 @@ function updateDeploymentDynamoTable(deploymentStatus, newStatus) {
 
 function updateDeploymentTargetState(deploymentStatus, newStatus) {
   let command = {
+    name: 'UpdateTargetState',
     environment: deploymentStatus.environmentName,
     key: `deployments/${deploymentStatus.deploymentId}/overall_status`,
-    value: newStatus.name,
-    deployment: { id: deploymentStatus.deploymentId, accountName: deploymentStatus.accountName }
+    value: newStatus.name
   };
 
-  return UpdateTargetState(command);
+  return sender.sendCommand({ command, user: systemUser });
 }
