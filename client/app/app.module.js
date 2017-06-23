@@ -13,7 +13,8 @@ var app = angular.module('EnvironmentManager', [
   'EnvironmentManager.environments',
   'EnvironmentManager.operations',
   'EnvironmentManager.configuration',
-  'EnvironmentManager.compare'
+  'EnvironmentManager.compare',
+  'smart-table'
 ]);
 
 // Setup global routes

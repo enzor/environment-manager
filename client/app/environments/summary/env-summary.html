@@ -1,7 +1,9 @@
 <div class="row">
-  <div class="col-md-12"><h2>Environments</h2></div>
+  <div class="col-md-12">
+    <h2>Environments</h2>
+  </div>
   <div id="RefreshData">
-  <span class="glyphicon glyphicon-refresh" ng-click="vm.refresh()" title="Refresh data"></span>
+    <span class="glyphicon glyphicon-refresh" ng-click="vm.refresh()" title="Refresh data"></span>
   </div>
 </div>
 
@@ -36,14 +38,17 @@
     <p>No environments found.</p>
   </div>
   <div class="col-md-12" ng-show="vm.data.length > 0">
-    <table class="table">
+    <table class="table table-striped" id="environments-table" st-table="displayedCollection" st-safe-src="vm.data">
       <thead>
         <tr>
+          <th colspan="5"><input st-search="" class="form-control" placeholder="global search ..." type="text" /></th>
+        </tr>
+        <tr>
           <th class="text-nowrap"></th>
-          <th class="text-nowrap">Environment</th>
-          <th class="text-nowrap">Owning Cluster</th>
-          <th class="text-nowrap">Description</th>
-          <th class="text-nowrap">Deployment Map</th>
+          <th class="text-nowrap" st-sort="EnvironmentName">Environment</th>
+          <th class="text-nowrap" st-sort="Configuration.OwningCluster">Owning Cluster</th>
+          <th class="text-nowrap" st-sort="Configuration.Description">Description</th>
+          <th class="text-nowrap" st-sort="Configuration.DeploymentMap">Deployment Map</th>
           <th class="text-nowrap">Status</th>
           <th class="text-nowrap command-header">View Deployments</th>
           <th class="text-nowrap command-header">View History</th>
@@ -51,34 +56,31 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="env in vm.data | orderBy : 'EnvironmentName'">
+        <tr ng-repeat="row in displayedCollection">
+          <td></td>
           <td>
-            <span class="glyphicon glyphicon-lock" data-ng-if="env.Operation.DeploymentsLocked"></span>
-            <span class="glyphicon glyphicon-wrench" data-ng-if="env.Operation.InMaintenance"></span>
+            <a href="#/environment/servers?environment={{row.EnvironmentName}}">{{row.EnvironmentName}} <small ng-if="env.Configuration.EnvironmentType">({{row.Configuration.EnvironmentType}})</small>
+          </td>
+          <td>{{row.Configuration.OwningCluster}}</td>
+          <td>{{row.Configuration.Description}}</td>
+          <td>
+            <a href="#/config/deploymentmaps/{{row.Configuration.DeploymentMap}}" target="_blank">{{row.Configuration.DeploymentMap}}</a>
           </td>
           <td>
-            <a href="#/environment/servers?environment={{env.EnvironmentName}}">{{env.EnvironmentName}} <small ng-if="env.Configuration.EnvironmentType">({{env.Configuration.EnvironmentType}})</small></a>
-          </td>
-          <td>{{env.Configuration.OwningCluster}}</td>
-          <td>{{env.Configuration.Description}}</td>
-          <td><a href="#/config/deploymentmaps/{{env.Configuration.DeploymentMap}}" target="_blank">{{env.Configuration.DeploymentMap}}</a></td>
-          <td>
-            <span ng-class="{'warning': env.Operation.getScheduleAction()==='OFF', 'ok': env.Operation.getScheduleAction()!=='OFF'}">
-              {{env.Operation.getScheduleAction()}}
+            <span ng-class="{'warning': row.Operation.getScheduleAction()==='OFF', 'ok': row.Operation.getScheduleAction()!=='OFF'}">
+              {{row.Operation.getScheduleAction()}}
             </span>
-            <span ng-if="env.Operation.ScheduleAutomatically === true"> (Automatic)</span>
-            <span ng-if="env.Operation.ScheduleAutomatically === false"> (Manual)</span>
+            <span ng-if="row.Operation.ScheduleAutomatically === true"> (Automatic)</span>
+            <span ng-if="row.Operation.ScheduleAutomatically === false"> (Manual)</span>
           </td>
           <td class="command command-viewDeployments">
-            <!-- TODO: show last deployment info timestamp/summary -->
-            <span class="glyphicon glyphicon-log-in" ng-click="vm.viewDeployments(env)" title="View Deployments"></span>
+            <span class="glyphicon glyphicon-log-in" ng-click="vm.viewDeployments(row)" title="View Deployments"></span>
           </td>
           <td class="command command-viewHistory">
-            <!-- TODO: show last config info summary for ease of ref? -->
-            <span class="glyphicon glyphicon-time" ng-click="vm.viewHistory(env)" title="View History"></span>
+            <span class="glyphicon glyphicon-time" ng-click="vm.viewHistory(row)" title="View History"></span>
           </td>
           <td ng-if="vm.userHasDeletePermission" class="command command-delete">
-            <span class="glyphicon glyphicon-remove" ng-click="vm.deleteEnvironment(env)" title="Delete"></span>
+            <span class="glyphicon glyphicon-remove" ng-click="vm.deleteEnvironment(row)" title="Delete"></span>
           </td>
         </tr>
       </tbody>

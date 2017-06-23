@@ -20,6 +20,7 @@ angular.module('EnvironmentManager.environments').controller('EnvironmentsSummar
     vm.dataLoading = false;
 
     function init() {
+
       vm.userHasCreatePermission = user.hasPermission({ access: 'POST', resource: '/config/environments/**' });
       vm.userHasDeletePermission = user.hasPermission({ access: 'DELETE', resource: '/config/environments/**' });
 
